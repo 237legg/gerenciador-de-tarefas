@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  projects Project[] @relation("ProjectOwner")
+  tasks    Task[]    @relation("TaskMembers")
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String
+  owner     User     @relation("ProjectOwner", fields: [ownerId], references: [id])
+  tasks     Task[]
+  columns   Column[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Column {
+  id        String   @id @default(uuid())
+  name      String
+  color     String?
+  position  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  tasks     Task[]
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  tags        String[]
+  deadline    DateTime?
+  priority    String    @default("MEDIUM")
+  position    Int
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  columnId String
+  column   Column @relation(fields: [columnId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members User[] @relation("TaskMembers")
+}
