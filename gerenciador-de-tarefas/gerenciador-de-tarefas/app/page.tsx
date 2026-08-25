@@ -10,8 +10,6 @@ export default async function Home() {
     <main className="p-10 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Meus Quadros</h1>
-
-        {/* Aqui está o seu novo botão! */}
         <CreateProjectButton />
       </div>
 

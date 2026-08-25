@@ -3,12 +3,22 @@
 import prisma from "../lib/prisma"; // Ajuste o caminho se necessário
 import { revalidatePath } from "next/cache";
 
-// buscar todos os projetos de um usuário
-export async function getProjects(userId: string) {
+// buscar todos os projetos de um usuário de acordo com a evolucao da pesquisa
+export async function getProjects(userId: string, search?: string) {
   const projectsList = await prisma.user.findUnique({
     where: { id: userId },
     include: {
-      projects: true
+      projects: {
+        where: {
+          name: {
+            contains: search || "",
+            mode: "insensitive",
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
     },
   });
 
@@ -16,41 +26,75 @@ export async function getProjects(userId: string) {
 }
 
 // cria um projeto novo
-export async function createProject(userId: string, projectName: string){
-  try{ //utilizei try/catch para evitar que erro de conexao com db quebre a aplicacao
-  const newProject = await prisma.project.create({
-    data: {
-      name: projectName,
-      ownerId : userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-
-    },
-  });
-  revalidatePath('/')
-  return{ success: true, data: newProject}
-}catch(error){
-  console.error("Erro ao criar projeto:", error)
-  return{ success: false, error: "Falha ao criar o projeto"}
-}
+export async function createProject(userId: string, projectName: string) {
+  try {
+    //utilizei try/catch para evitar que erro de conexao com db quebre a aplicacao
+    const newProject = await prisma.project.create({
+      data: {
+        name: projectName,
+        ownerId: userId,
+      },
+    });
+    revalidatePath("/");
+    return { success: true, data: newProject };
+  } catch (error) {
+    console.error("Erro ao criar projeto:", error);
+    return { success: false, error: "Falha ao criar o projeto" };
+  }
 }
 
 // criar uma nova Coluna
-export async function createColumn(
-  projectId: string,
-  name: string,
-  position: number
-) {
-  const newColumn = await prisma.column.create({
-    data: {
-      name: name,
-      position: position,
-      projectId: projectId,
-    },
-  });
+export async function createColumn(projectId: string, name: string) {
+  try {
+    const lastColumn = await prisma.column.findFirst({
+      where: { projectId: projectId },
+      orderBy: { position: "desc" },
+    });
+    const nextPosition = lastColumn ? lastColumn.position + 1 : 0;
 
-  // Atualiza a tela automaticamente para mostrar a nova coluna
-  revalidatePath(`/project/${projectId}`);
+    const newColumn = await prisma.column.create({
+      data: {
+        name: name,
+        position: nextPosition,
+        projectId: projectId,
+      },
+    });
 
-  return newColumn;
+    revalidatePath("/project/${projectId}");
+    return { success: true, data: newColumn };
+  } catch (error) {
+    console.error("Erro ao criar coluna:", error);
+    return { success: false, error: "Falha ao criar a coluna." };
+  }
 }
+
+//cria uma nova task
+export async function createTask(
+  columnId: string,
+  projectId: string,
+  name: string
+) {
+  try {
+    const lastTask = await prisma.task.findFirst({
+      where: { projectId: projectId },
+      orderBy: { position: "desc" },
+    });
+    const nextPosition = lastTask ? lastTask.position + 1 : 0;
+
+    const newTask = await prisma.task.create({
+      data: {
+        title: name,
+        projectId: projectId,
+        columnId: columnId,
+        position: nextPosition,
+      },
+    });
+    revalidatePath("/project/${projectId}");
+    return { success: true, data: newTask };
+  } catch (error) {
+    console.error("Erro ao criar tarefa:", error);
+    return { success: false, error: "Falha ao criar a tarefa." };
+  }
+}
+
+
