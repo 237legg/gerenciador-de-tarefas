@@ -5,14 +5,14 @@ import { revalidatePath } from "next/cache";
 
 // buscar todos os projetos de um usuário
 export async function getProjects(userId: string) {
-  const projects = await prisma.project.findMany({
-    where: { ownerId: userId },
+  const projectsList = await prisma.user.findUnique({
+    where: { id: userId },
     include: {
-      columns: true, 
+      projects: true
     },
   });
 
-  return projects; // retorna um array de Projetos
+  return projectsList?.projects || []; // retorna um array de Projetos
 }
 
 // cria um projeto novo
@@ -22,6 +22,9 @@ export async function createProject(userId: string, projectName: string){
     data: {
       name: projectName,
       ownerId : userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+
     },
   });
   revalidatePath('/')
@@ -32,7 +35,7 @@ export async function createProject(userId: string, projectName: string){
 }
 }
 
-// Exemplo 2: Criar uma nova Coluna
+// criar uma nova Coluna
 export async function createColumn(
   projectId: string,
   name: string,
