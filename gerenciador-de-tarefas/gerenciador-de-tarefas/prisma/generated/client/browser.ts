@@ -37,3 +37,8 @@ export type Column = Prisma.ColumnModel
  * 
  */
 export type Task = Prisma.TaskModel
+/**
+ * Model Tag
+ * 
+ */
+export type Tag = Prisma.TagModel

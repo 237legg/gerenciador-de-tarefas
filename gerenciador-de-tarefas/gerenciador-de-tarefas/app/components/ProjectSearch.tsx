@@ -3,6 +3,11 @@
 import { useEffect, useState, useTransition } from "react";
 import { getProjects } from "../actions/board";
 
+interface Project {
+  id: string;
+  name: string;
+}
+
 interface ProjectSearchProps {
   userId: string;
 }
@@ -21,7 +26,7 @@ export function ProjectSearch({ userId }: ProjectSearchProps) {
 
   return (
     <div className="w-full max-w-4xl mx-auto mt-10 space-y-6">
-      {/* Lupa */}
+      {/* lupa */}
       <div className="relative">
         <span className="absolute left-3 top-3 text-gray-400">🔍</span>
         <input
@@ -38,7 +43,7 @@ export function ProjectSearch({ userId }: ProjectSearchProps) {
         )}
       </div>
 
-      {/* Lista de Projetos Filtrados */}
+      {/* filtered projects */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {projects.length === 0 && !isPending ? (
           <p className="text-gray-500">Nenhum projeto encontrado.</p>
