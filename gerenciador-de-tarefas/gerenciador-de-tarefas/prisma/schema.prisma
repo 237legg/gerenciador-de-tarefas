@@ -1,10 +1,12 @@
 generator client {
   provider = "prisma-client"
   output   = "./generated/client"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
+  extensions = [pg_trgm]
 }
 
 model User {
@@ -27,6 +29,7 @@ model Project {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   tags      Tag[]
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
 }
 
 model Column {
