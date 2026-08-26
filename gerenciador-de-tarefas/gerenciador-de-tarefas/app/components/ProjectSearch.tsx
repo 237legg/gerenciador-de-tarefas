@@ -14,14 +14,22 @@ interface ProjectSearchProps {
 
 export function ProjectSearch({ userId }: ProjectSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isPending, startTransition] = useTransition();
   //useEffect reload e sempre que o 'searchTerm' muda
   useEffect(() => {
-    startTransition(async () => {
-      const results = await getProjects(userId, searchTerm);
-      setProjects(results);
-    });
+    const timer = setTimeout(() => {
+      startTransition(async () => {
+        const result = await getProjects(userId, searchTerm);
+        if(result.success){
+          setProjects(result.data || []);
+        }else{
+          console.error("Erro ao buscar projetos:", result.error);
+        }
+      });
+    }, 500); // delay de 500ms 
+
+    return () => clearTimeout(timer);
   }, [searchTerm, userId]); //quem ativa esse efeito
 
   return (

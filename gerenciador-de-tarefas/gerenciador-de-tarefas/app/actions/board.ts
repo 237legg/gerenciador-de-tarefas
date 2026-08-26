@@ -9,7 +9,10 @@ import { createTaskService } from "../services/createTaskService";
 import { addTagTaskService } from "../services/addTagTaskService";
 import { removeTagTaskService } from "../services/removeTagTaskService";
 import { createTagService } from "../services/createTagService";
-
+import { assignPeopleTaskService } from "../services/assignPeopleTaskService";
+import { removePeopleTaskService } from "../services/removePeopleTaskService";
+import { assignDeadlineTaskService } from "../services/assignDeadlineTaskService";
+import { removeDeadlineTaskService } from "../services/removeDeadlineTaskService";
 // buscar todos os projetos de um usuário de acordo com a evolucao da pesquisa
 export const getProjects = withErrorHandler(
   async (userId: string, search?: string) => {
@@ -68,6 +71,42 @@ export const createTag = withErrorHandler(
   async (projectId: string, name: string, color: string) => {
     const newTag = await createTagService(projectId, name, color);
     revalidatePath(`/project/${projectId}`);
-    return createTagService;
+    return newTag;
+  }
+);
+
+//adicionar pessoas a uma task
+export const assignPeopleTask = withErrorHandler(
+  async (taskId: string, userId: string, projectId: string) => {
+    const taskUpdate = await assignPeopleTaskService(taskId, userId);
+    revalidatePath(`/project/${projectId}`);
+    return taskUpdate;
+  }
+);
+
+//remover pessoas de uma task
+export const removePeopleTask = withErrorHandler(
+  async (taskId: string, userId: string, projectId: string) => {
+    const taskUpdate = await removePeopleTaskService(taskId, userId);
+    revalidatePath(`/project/${projectId}`);
+    return taskUpdate;
+  }
+);
+
+//adicionar deadline a uma task 
+export const assignDeadlineTask = withErrorHandler(
+  async (taskId: string, deadline: Date, projectId: string) => {
+    const taskUpdate = await assignDeadlineTaskService(taskId, deadline);
+    revalidatePath(`/project/${projectId}`);
+    return taskUpdate;
+  }
+);
+
+//remover deadline de uma task
+export const removeDeadlineTask = withErrorHandler(
+  async (taskId: string, projectId: string) => {
+    const taskUpdate = await removeDeadlineTaskService(taskId);
+    revalidatePath(`/project/${projectId}`);
+    return taskUpdate;
   }
 );
