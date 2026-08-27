@@ -13,6 +13,8 @@ import { assignPeopleTaskService } from "../services/assignPeopleTaskService";
 import { removePeopleTaskService } from "../services/removePeopleTaskService";
 import { assignDeadlineTaskService } from "../services/assignDeadlineTaskService";
 import { removeDeadlineTaskService } from "../services/removeDeadlineTaskService";
+import { reorderTaskService } from "../services/reorderTaskService";
+
 // buscar todos os projetos de um usuário de acordo com a evolucao da pesquisa
 export const getProjects = withErrorHandler(
   async (userId: string, search?: string) => {
@@ -93,7 +95,7 @@ export const removePeopleTask = withErrorHandler(
   }
 );
 
-//adicionar deadline a uma task 
+//adicionar deadline a uma task
 export const assignDeadlineTask = withErrorHandler(
   async (taskId: string, deadline: Date, projectId: string) => {
     const taskUpdate = await assignDeadlineTaskService(taskId, deadline);
@@ -108,5 +110,21 @@ export const removeDeadlineTask = withErrorHandler(
     const taskUpdate = await removeDeadlineTaskService(taskId);
     revalidatePath(`/project/${projectId}`);
     return taskUpdate;
+  }
+);
+
+// reordenar tasks para o drag n drop
+type TaskUpdateInput = {
+  id: string;
+  columnId: string;
+  position: number;
+};
+
+export const reorderTask = withErrorHandler(
+  async (tasks: TaskUpdateInput[], projectId: string) => {
+    const result = await reorderTaskService(tasks);
+    revalidatePath(`/project/${projectId}`);
+
+    return result;
   }
 );
