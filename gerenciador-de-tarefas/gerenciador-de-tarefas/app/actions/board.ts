@@ -24,6 +24,15 @@ import { deleteProjectService } from "../services/deleteProjectService";
 import { updateProjectService } from "../services/updateProjectService";
 import { getTagsByProjectService } from "../services/getTagsByProjectService";
 import { deleteTagService } from "../services/deleteTagService";
+import {
+  tagDeadlineSuggestionService,
+  generateSubtasksService,
+  summarizeDescriptionService,
+  getPriorityTaskService,
+  processVoiceToTaskService,
+  improveWritingService,
+  generateFullProjectService,
+} from "../services/aiServices";
 
 // buscar todos os projetos de um usuário de acordo com a evolucao da pesquisa
 export const getProjects = withErrorHandler(
@@ -53,10 +62,98 @@ export const createColumn = withErrorHandler(
 
 //cria uma nova task
 export const createTask = withErrorHandler(
-  async (columnId: string, projectId: string, name: string) => {
-    const newTask = await createTaskService(columnId, projectId, name);
+  async (
+    columnId: string,
+    projectId: string,
+    name: string,
+    description?: string,
+    deadline?: Date | null,
+  ) => {
+    const newTask = await createTaskService({
+      projectId,
+      columnId,
+      name,
+      description,
+      deadline,
+    });
     revalidatePath(`/project/${projectId}`);
     return newTask;
+  },
+);
+
+//gerar sugestoes tag e deadline ai
+export const fetchTaskSuggestions = withErrorHandler(
+  async (title: string, description: string = "") => {
+    const { suggestedTags, detectedDeadline } =
+      await tagDeadlineSuggestionService(title, description);
+    return {
+      tags: suggestedTags,
+      deadline: detectedDeadline ? new Date(detectedDeadline) : null,
+    };
+  },
+);
+//gerar checklist (substasks) com ia a partir de uma tarefa
+export const generateTaskChecklistWithAI = withErrorHandler(
+  async (
+    taskId: string,
+    projectId: string,
+    title: string,
+    description: string = "",
+  ) => {
+    const steps = await generateSubtasksService(title, description);
+
+    const structuredChecklist = steps.map((step) => ({
+      text: step,
+      isCompleted: false,
+    }));
+
+    const updatedTask = await updateTaskService(taskId, {
+      checklist: structuredChecklist,
+    });
+
+    revalidatePath(`/project/${projectId}`);
+
+    return updatedTask;
+  },
+);
+
+//resumir descricao com ai
+export const fetchDescriptionSummary = withErrorHandler(
+  async (description: string) => {
+    const cleanDescription = await summarizeDescriptionService(description);
+    return cleanDescription;
+  },
+);
+
+//tarefa a seguir ai
+export const fetchPriorityTask = withErrorHandler(async (tasks: any[]) => {
+  const priorityData = await getPriorityTaskService(tasks);
+  return priorityData;
+});
+
+//criar tarefa com ai por voz
+export const createTaskFromVoice = withErrorHandler(
+  async (formData: FormData, projectId: string, columnId: string) => {
+    const audioFile = formData.get("audio") as File;
+    if (!audioFile) throw new Error("Nenhum arquivo de audio recebido");
+    const { name, description, deadline } =
+      await processVoiceToTaskService(audioFile);
+    const newTask = await createTaskService({
+      projectId,
+      columnId,
+      name,
+      description,
+      deadline,
+    });
+    revalidatePath(`/project/${projectId}`);
+    return newTask;
+  },
+);
+
+//melhor escrita do texto com ai
+export const improveTaskText = withErrorHandler(
+  async (text: string, tone: "profissional" | "amigável" | "direto") => {
+    return await improveWritingService(text, tone);
   },
 );
 
@@ -146,7 +243,7 @@ export const updateTask = withErrorHandler(
     description: string,
     projectId: string,
   ) => {
-    const updatedTask = await updateTaskService(taskId, title, description);
+    const updatedTask = await updateTaskService(taskId, { title, description });
     revalidatePath(`/project/${projectId}`);
     return updatedTask;
   },

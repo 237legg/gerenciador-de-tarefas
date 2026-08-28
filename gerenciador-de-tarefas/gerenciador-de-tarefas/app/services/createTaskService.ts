@@ -1,11 +1,21 @@
 import { AppError } from "../lib/errors";
 import prisma from "../lib/prisma";
 
-export async function createTaskService(
-  columnId: string,
-  projectId: string,
-  name: string
-) {
+type CreateTaskInput = {
+  projectId: string;
+  columnId: string;
+  name: string;
+  description?: string;
+  deadline?: Date | null;
+};
+
+export async function createTaskService({
+  projectId,
+  columnId,
+  name,
+  description = "",
+  deadline = null,
+}: CreateTaskInput) {
   if (!name || name.trim() === "") {
     throw new AppError("O título da tarefa é obrigatório.");
   }
@@ -21,10 +31,12 @@ export async function createTaskService(
 
   const newTask = await prisma.task.create({
     data: {
-      title: name,
-      projectId: projectId,
-      columnId: columnId,
+      title: name.trim(),
+      description: description.trim(),
+      projectId,
+      columnId,
       position: nextPosition,
+      deadline,
     },
   });
   return newTask;
