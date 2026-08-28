@@ -1,7 +1,7 @@
 import { AppError } from "../lib/errors";
 import prisma from "../lib/prisma";
 
-export async function getProjectById(projectId: string) {
+export async function getProjectByIdService(projectId: string) {
   if (!projectId) {
     throw new AppError("O ID do projeto é obrigatório para carregar o quadro.");
   }
@@ -31,4 +31,5 @@ export async function getProjectById(projectId: string) {
   if (!board) {
     throw new AppError("Projeto não encontrado.");
   }
+  return board;
 }
